@@ -4,12 +4,15 @@ Este proyecto está diseñado para implementar un sistema de aprendizaje federad
 
 ## Estructura del Proyecto
 
-El proyecto se organiza en varias partes clave:
+El proyecto se organiza en:
 
-1. **`main.py`**: Script principal que coordina la ejecución del servidor y los clientes federados.
+1. **`main.py`**: Script principal que coordina la ejecución del servidor y los clientes.
 2. **`start_server.py`**: Inicia el servidor federado con la estrategia de agregación configurada.
-3. **`start_clients.py`**: Inicia múltiples instancias de clientes federados, cada uno corriendo el script `fed_client.py`.
-4. **`fedavg_strategy.py`**, **`fedprox_strategy.py`**, **`fednova_strategy.py`**: Implementaciones de diferentes estrategias de agregación federada (FedAvg, FedProx, FedNova).
+3. **`start_clients.py`**: Inicia múltiples instancias de clientes federados.
+4. **`fedavg_strategy.py`**, **`fedprox_strategy.py`**, **`fednova_strategy.py`**: Implementaciones de diferentes estrategias de agregación federada:
+   - **FedAvg**: (https://arxiv.org/abs/1602.05629)
+   - **FedProx**: (https://arxiv.org/abs/1812.06127)
+   - **FedNova**: (https://arxiv.org/abs/2007.07481)
 5. **`fed_client.py`**: Implementa la lógica del cliente federado, incluyendo el entrenamiento del modelo y la comunicación con el servidor.
 6. **`model.py`**: Define el modelo de red neuronal utilizado para el entrenamiento.
 7. **`configuracion.yaml`**: Archivo de configuración que especifica los parámetros del modelo, entrenamiento, servidor, y clientes.
@@ -44,12 +47,12 @@ Para ejecutar el sistema de aprendizaje federado, sigue estos pasos:
    - Ajusta los parámetros del modelo, entrenamiento, servidor y clientes según tus necesidades en el archivo `configuracion.yaml`.
 
 3. **Inicia el Sistema**:
-   - Ejecuta el script principal con el siguiente comando:
+   - Ejecuta el script principal con:
 
      ```bash
      python main.py
      ```
 
-   - Este comando iniciará el servidor en segundo plano y luego lanzará los clientes federados para comenzar el proceso de entrenamiento federado.
+   - Este comando iniciará el servidor y lanzará los clientes federados para comenzar el proceso de entrenamiento federado.
 
 Este proyecto proporciona una base sólida para experimentar con el aprendizaje federado y puede ser extendido con nuevas estrategias, ajustes en el modelo y parámetros de entrenamiento.
