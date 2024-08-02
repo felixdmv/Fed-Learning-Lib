@@ -16,6 +16,7 @@ El proyecto se organiza en:
 5. **`fed_client.py`**: Implementa la lógica del cliente federado, incluyendo el entrenamiento del modelo y la comunicación con el servidor.
 6. **`model.py`**: Define el modelo de red neuronal utilizado para el entrenamiento.
 7. **`configuracion.yaml`**: Archivo de configuración que especifica los parámetros del modelo, entrenamiento, servidor, y clientes.
+8. **`diabetes_data.csv`**: Dataset utilizado para predecir si un paciente tiene o no diabetes. Cada fila del archivo representa un paciente con varias características médicas y demográficas, y la columna objetivo indica la presencia o no de diabetes.
 
 ## Flujo de Ejecución
 
