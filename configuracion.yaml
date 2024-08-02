@@ -3,23 +3,23 @@
 model:
   save_model_directory: "./models" 
   input_dim: 213 # Número de características de entrada
-  hidden_dim: 20 # Número de neuronas en la capa oculta
-  num_layers: 4 # Número de capas ocultas
+  hidden_dim: 5 # Número de neuronas en la capa oculta
+  num_layers: 2 # Número de capas ocultas
   output_dim: 1 # Una neurona para clasificación binaria (entre 0 y 1)
 
 training:
   learning_rate: 0.001 # Tasa de aprendizaje
   batch_size: 64 # Tamaño del lote
-  epochs: 10 # Número de épocas
+  epochs: 5 # Número de épocas
   dropout_rate: 0.4 # Tasa de abandono
   prox_mu: 0.1 # Parámetro de proximidad
   strategy: "fedNova"  # Opciones: "fedAvg", "fedProx", "fedNova"
 
 server:
-  num_rounds: 10  # Número de rondas de entrenamiento
+  num_rounds: 5  # Número de rondas de entrenamiento
   server_address: "0.0.0.0:8080"  # Dirección del servidor
 
 
 client:
-  num_clients: 5  # Número de clientes
-  train_data_path: "processed_data.csv"  # Ruta de los datos de entrenamiento
+  num_clients: 3  # Número de clientes
+  train_data_path: "diabetes_data.csv"  # Ruta de los datos de entrenamiento

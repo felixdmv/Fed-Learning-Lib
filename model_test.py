@@ -126,7 +126,8 @@ if __name__ == "__main__":
     dropout_rate = config['training']['dropout_rate']
     batch_size = config['training']['batch_size']
 
-    X, y = preprocess_data('processed_data.csv')
+    #X, y = preprocess_data('processed_data.csv')
+    X, y = preprocess_data(config['client']['train_data_path'])
     X_train, X_test, y_train, y_test = split_data(X, y)
     testset = CustomDataset(X_test, y_test)
     testloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
