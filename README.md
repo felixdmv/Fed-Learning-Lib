@@ -20,7 +20,7 @@ El proyecto se organiza en:
 ## Flujo de Ejecución
 
 1. **Inicio del Servidor**: 
-   - El script `main.py` inicia el servidor federado en segundo plano usando `start_server.py`. El servidor se configura de acuerdo con la estrategia de agregación especificada en `configuracion.yaml`.
+   - El script `main.py` inicia el servidor federado con `start_server.py`. El servidor se configura de acuerdo con la estrategia de agregación especificada en `configuracion.yaml`.
 
 2. **Inicio de los Clientes**:
    - Luego de iniciar el servidor, `main.py` lanza el script `start_clients.py` para iniciar múltiples instancias de clientes. Cada cliente se conecta al servidor federado y participa en el proceso de entrenamiento.
@@ -34,14 +34,18 @@ El proyecto se organiza en:
    - En cada ronda, el servidor recibe los parámetros del modelo de todos los clientes, los agrega utilizando la estrategia especificada, y guarda el modelo global. La estrategia de agregación puede incluir métodos como FedAvg (promedio de los parámetros), FedProx (con proximidad), o FedNova (normalización de gradientes).
 
 5. **Finalización del Entrenamiento**:
-   - El proceso de entrenamiento y agregación se repite hasta completar el número de rondas definido en `configuracion.yaml`. Tras completar las rondas, el entrenamiento finaliza y se guarda el modelo global.
-
+   - El proceso de entrenamiento y agregación se repite hasta completar el número de rondas definido en `configuracion.yaml`. Tras completar las rondas, el entrenamiento finaliza.
+   
 ## Ejecución del Proyecto
 
 Para ejecutar el sistema de aprendizaje federado, sigue estos pasos:
 
 1. **Prepara el Entorno**:
-   - Asegúrate de tener todas las dependencias necesarias instaladas (incluyendo `flwr`, `torch`, `numpy`, `pandas`, `pyyaml`).
+   - Asegúrate de tener todas las dependencias necesarias instaladas. Puedes instalar las dependencias utilizando el archivo `requirements.txt`. Ejecuta el siguiente comando en tu terminal:
+
+     ```bash
+     pip install -r requirements.txt
+     ```
 
 2. **Configura el Archivo `configuracion.yaml`**:
    - Ajusta los parámetros del modelo, entrenamiento, servidor y clientes según tus necesidades en el archivo `configuracion.yaml`.
