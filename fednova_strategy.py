@@ -81,10 +81,14 @@ def log_parameters(parameters: Parameters):
         logging.error("Error logging parameters:", exc_info=True)
         traceback.print_exc()
 
+
+
 class FedNova(FedAvg):
-    def __init__(self, save_model_directory: str, handle_aggregated_parameters: Optional[Callable[[Dict[str, torch.Tensor]], None]] = None):
+    def __init__(self, save_model_directory: str, learning_rate: float, epochs: int, handle_aggregated_parameters: Optional[Callable[[Dict[str, torch.Tensor]], None]] = None):
         super().__init__()
         self.save_model_directory = save_model_directory
+        self.learning_rate = learning_rate
+        self.epochs = epochs
         self.global_parameters = None
         self.previous_model_parameters = None
         self.parameter_shapes = None
@@ -104,6 +108,9 @@ class FedNova(FedAvg):
 
         for client, fit_res in results:
             num_examples_client = fit_res.num_examples
+            # Use learning_rate and epochs from the configuration
+            eta_i = self.learning_rate
+            t_i = self.epochs
 
             # Log and validate client parameters
             log_parameters(fit_res.parameters)
@@ -112,23 +119,27 @@ class FedNova(FedAvg):
                 logging.error(f"Client {client} provided invalid parameters, skipping...")
                 continue
 
-            if not aggregated_parameters_ndarrays:
-                aggregated_parameters_ndarrays = [np.zeros_like(param) for param in client_parameters]
+            # Normalize updates by the amount of work (eta_i * t_i)
+            normalized_updates = [param / (eta_i * t_i) for param in client_parameters]
 
-            for i, param in enumerate(client_parameters):
+            if not aggregated_parameters_ndarrays:
+                aggregated_parameters_ndarrays = [np.zeros_like(param) for param in normalized_updates]
+
+            for i, param in enumerate(normalized_updates):
                 aggregated_parameters_ndarrays[i] += param * (num_examples_client / total_examples)
 
         # Convert aggregated_parameters to state_dict
         aggregated_parameters = ndarrays_to_parameters(aggregated_parameters_ndarrays)
         state_dict = parameters_to_state_dict(aggregated_parameters, model)
-        # Crear directorio para la ronda
+        
+        # Create directory for the round
         round_dir = os.path.join(self.save_model_directory, f'round_{server_round}')
         os.makedirs(round_dir, exist_ok=True)
 
-        # Guardar el modelo agregado
+        # Save the aggregated model
         model.load_state_dict(state_dict)
 
-        # Exportar el modelo a TorchScript
+        # Export the model to TorchScript
         model_scripted = torch.jit.script(model)
         model_scripted.save(os.path.join(round_dir, 'aggregated_model.pth'))
         logging.info(f'Saved global model for round {server_round}: {model_scripted}.pth')
@@ -137,7 +148,6 @@ class FedNova(FedAvg):
         aggregated_metrics = {}  # Replace with actual metrics if needed
         return aggregated_parameters, aggregated_metrics
 
-            
     def aggregate_evaluate(
         self,
         server_round: int,
