@@ -3,20 +3,20 @@
 model:
   save_model_directory: "./models" 
   input_dim: 213 # Número de características de entrada
-  hidden_dim: 5 # Número de neuronas en la capa oculta
-  num_layers: 2 # Número de capas ocultas
+  hidden_dim: 8 # Número de neuronas en la capa oculta
+  num_layers: 3 # Número de capas ocultas
   output_dim: 1 # Una neurona para clasificación binaria (entre 0 y 1)
 
 training:
   learning_rate: 0.001 # Tasa de aprendizaje
   batch_size: 64 # Tamaño del lote
-  epochs: 5 # Número de épocas
+  epochs: 4 # Número de épocas
   dropout_rate: 0.4 # Tasa de abandono
   prox_mu: 0.1 # Parámetro de proximidad
-  strategy: "fedNova"  # Opciones: "fedAvg", "fedProx", "fedNova"
+  strategy: "custom"  # Opciones: "fedAvg", "fedProx", "fedNova", "custom"
 
 server:
-  num_rounds: 5  # Número de rondas de entrenamiento
+  num_rounds: 50  # Número de rondas de entrenamiento
   server_address: "0.0.0.0:8080"  # Dirección del servidor
 
 
