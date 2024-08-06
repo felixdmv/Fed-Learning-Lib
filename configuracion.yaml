@@ -1,5 +1,29 @@
 # configuracion.yaml
 
+model:
+  save_model_directory: "./models" 
+  input_dim: 213 # Número de características de entrada
+  hidden_dim: 5 # Número de neuronas en la capa oculta
+  num_layers: 2 # Número de capas ocultas
+  output_dim: 1 # Una neurona para clasificación binaria (entre 0 y 1)
+
+training:
+  learning_rate: 0.0005 # Tasa de aprendizaje
+  batch_size: 64 # Tamaño del lote
+  epochs: 3 # Número de épocas
+  dropout_rate: 0.4 # Tasa de abandono
+  prox_mu: 0.1 # Parámetro de proximidad
+  strategy: "fedNova"  # Opciones: "fedAvg", "fedProx", "fedNova", "custom"
+
+server:
+  num_rounds: 50  # Número de rondas de entrenamiento
+  server_address: "0.0.0.0:8080"  # Dirección del servidor
+
+
+client:
+  num_clients: 10  # Número de clientes
+  train_data_path: "diabetes_data.csv"  # Ruta de los datos de entrenamiento
+
 # model:
 #   save_model_directory: "./models" 
 #   input_dim: 213 # Número de características de entrada
@@ -8,7 +32,7 @@
 #   output_dim: 1 # Una neurona para clasificación binaria (entre 0 y 1)
 
 # training:
-#   learning_rate: 0.0005 # Tasa de aprendizaje
+#   learning_rate: 0.1   # Tasa de aprendizaje
 #   batch_size: 64 # Tamaño del lote
 #   epochs: 3 # Número de épocas
 #   dropout_rate: 0.4 # Tasa de abandono
@@ -16,34 +40,10 @@
 #   strategy: "fedNova"  # Opciones: "fedAvg", "fedProx", "fedNova", "custom"
 
 # server:
-#   num_rounds: 50  # Número de rondas de entrenamiento
+#   num_rounds: 30  # Número de rondas de entrenamiento
 #   server_address: "0.0.0.0:8080"  # Dirección del servidor
 
 
 # client:
-#   num_clients: 10  # Número de clientes
+#   num_clients: 2  # Número de clientes
 #   train_data_path: "diabetes_data.csv"  # Ruta de los datos de entrenamiento
-
-model:
-  save_model_directory: "./models" 
-  input_dim: 213 # Número de características de entrada
-  hidden_dim: 1 # Número de neuronas en la capa oculta
-  num_layers: 1 # Número de capas ocultas
-  output_dim: 1 # Una neurona para clasificación binaria (entre 0 y 1)
-
-training:
-  learning_rate: 0.01   # Tasa de aprendizaje
-  batch_size: 64 # Tamaño del lote
-  epochs: 3 # Número de épocas
-  dropout_rate: 0.4 # Tasa de abandono
-  prox_mu: 0.1 # Parámetro de proximidad
-  strategy: "fedNova"  # Opciones: "fedAvg", "fedProx", "fedNova", "custom"
-
-server:
-  num_rounds: 30  # Número de rondas de entrenamiento
-  server_address: "0.0.0.0:8080"  # Dirección del servidor
-
-
-client:
-  num_clients: 2  # Número de clientes
-  train_data_path: "diabetes_data.csv"  # Ruta de los datos de entrenamiento
