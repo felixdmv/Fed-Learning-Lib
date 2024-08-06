@@ -7,7 +7,7 @@ def main():
     server_process = subprocess.Popen(["python", "start_server.py"])
     
     # Esperar un momento para asegurar que el servidor esté listos
-    time.sleep(5)  # Ajusta este tiempo si es necesario
+    time.sleep(15)  # Ajusta este tiempo si es necesario
     
     # Llamar al script para iniciar los clientes
     print("Iniciando clientes...")
@@ -19,4 +19,4 @@ def main():
     client_process.wait()
 
 if __name__ == "__main__":
-    main()
+    main()  
