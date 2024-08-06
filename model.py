@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class SimpleBinaryClassifier(nn.Module):
     def __init__(self, input_size, hidden_dim, num_layers, output_size, dropout_rate):
@@ -13,11 +14,14 @@ class SimpleBinaryClassifier(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
-        x = self.sigmoid(x)  # Convertir la salida a probabilidad
-        return x
+        out = self.fc1(x)
+        out = self.relu(out)
+        out = self.dropout(out)
+        out = self.fc2(out)
+        out = self.sigmoid(out)
+        
+        return out
+
 
 def create_model(input_size, hidden_dim, num_layers, output_size, device):
     """Create a new SimpleBinaryClassifier model instance."""
