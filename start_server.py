@@ -9,6 +9,7 @@ from fedavg_strategy import FedAvg
 from fedprox_strategy import FedProx
 from fednova_strategy import FedNova
 from custom_strategy import Custom
+from scaffold_strategy import Scaffold
 import traceback
 
 def load_config(yaml_file: str) -> Dict[str, Any]:
@@ -28,11 +29,12 @@ configuracion = load_config('configuracion.yaml')
 strategy_name = configuracion['training']['strategy']
 learning_rate = configuracion['training']['learning_rate']
 epochs = configuracion['training']['epochs']
-
+local_steps = configuracion['training']['local_steps']
 
 def create_strategy(strategy_name: str, model_config: Dict[str, Any], training_config: Dict[str, Any], server_config: Dict[str, Any]) -> fl.server.strategy.Strategy:
     """Create an instance of the federated learning strategy based on the strategy name."""
     save_model_directory = model_config["save_model_directory"]
+    
     os.makedirs(os.path.dirname(save_model_directory), exist_ok=True)
     
     print(f"Creating strategy: {strategy_name}...")
@@ -69,6 +71,12 @@ def create_strategy(strategy_name: str, model_config: Dict[str, Any], training_c
                 handle_aggregated_parameters=handle_aggregated_parameters
             )
         
+        elif strategy_name == 'scaffold':
+            return Scaffold(
+                save_model_directory=save_model_directory,
+                handle_aggregated_parameters=handle_aggregated_parameters,
+                local_steps=local_steps
+            )
         else:
             raise ValueError(f"Strategy {strategy_name} not supported")
     except Exception as e:
