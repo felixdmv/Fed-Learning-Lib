@@ -8,7 +8,7 @@ model:
   output_dim: 1 # Una neurona para clasificación binaria (entre 0 y 1)
 
 training:
-  learning_rate: 0.0005 # Tasa de aprendizaje
+  learning_rate: 0.08 # Tasa de aprendizaje, para fedNova > 0.05, para el resto >= 0.0005
   batch_size: 64 # Tamaño del lote
   epochs: 3 # Número de épocas
   dropout_rate: 0.4 # Tasa de abandono
