@@ -12,13 +12,8 @@ from flwr.common import EvaluateRes, FitRes, FitIns
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from model import create_model
+from utils import load_config
 
-# Load configuration from YAML file
-def load_config(yaml_file: str) -> Dict[str, Any]:
-    """Load configuration from a YAML file."""
-    with open(yaml_file, 'r') as file:
-        config = yaml.safe_load(file)
-    return config
 
 # Load configuration
 config = load_config('configuracion.yaml')

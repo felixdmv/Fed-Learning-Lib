@@ -2,11 +2,12 @@ import os
 import logging
 import numpy as np
 import torch
-from typing import List, Tuple, Dict, Any, Callable, Optional, Union
+from typing import List, Tuple, Dict, Optional
 from flwr.common import Parameters, parameters_to_ndarrays, ndarrays_to_parameters
 from flwr.server.strategy import FedAvg
 from flwr.server.client_proxy import ClientProxy
 from model import create_model
+from utils import load_config
 from flwr.common import FitRes, FitIns, EvaluateRes
 import yaml
 import traceback
@@ -14,15 +15,7 @@ import traceback
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Load configuration from YAML file
-def load_config(yaml_file: str) -> Dict[str, Any]:
-    try:
-        with open(yaml_file, 'r') as file:
-            config = yaml.safe_load(file)
-        return config
-    except Exception as e:
-        logging.error(f"Error loading config file {yaml_file}: {e}")
-        traceback.print_exc()
+
 
 config = load_config('configuracion.yaml')
 

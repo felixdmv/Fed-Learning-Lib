@@ -1,6 +1,10 @@
 # utils.py
 
 from typing import List, Tuple, Dict
+import yaml
+import logging
+import traceback
+from typing import Any
 
 def weighted_average(metrics: List[Tuple[int, Dict[str, float]]]) -> Dict[str, float]:
     """Aggregate metrics by computing the weighted average.
@@ -38,3 +42,14 @@ def weighted_average(metrics: List[Tuple[int, Dict[str, float]]]) -> Dict[str, f
         import logging
         logging.error(f"Error during metrics aggregation: {e}")
         return {"accuracy": 0}
+
+
+# Load configuration from YAML file
+def load_config(yaml_file: str) -> Dict[str, Any]:
+    try:
+        with open(yaml_file, 'r') as file:
+            config = yaml.safe_load(file)
+        return config
+    except Exception as e:
+        logging.error(f"Error loading config file {yaml_file}: {e}")
+        traceback.print_exc()
