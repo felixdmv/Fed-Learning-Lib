@@ -13,9 +13,12 @@ El proyecto se organiza en:
    - **FedAvg**: (https://arxiv.org/abs/1602.05629)
    - **FedProx**: (https://arxiv.org/abs/1812.06127)
    - **FedNova**: (https://arxiv.org/abs/2007.07481)
+   - **Scaffold**: (https://proceedings.mlr.press/v119/karimireddy20a.html)
+   - **Custom**
 5. **`fed_client.py`**: Implementa la lógica del cliente federado, incluyendo el entrenamiento del modelo y la comunicación con el servidor.
 6. **`model.py`**: Define el modelo de red neuronal utilizado para el entrenamiento.
-7. **`configuracion.yaml`**: Archivo de configuración que especifica los parámetros del modelo, entrenamiento, servidor, y clientes.
+9. **`utils.py`**: Funciones de utilidad comunes a varias estrategias.
+7. **`configuracion.yaml`**: Archivo de configuración que especifica los parámetros del modelo, entrenamiento, servidor y clientes.
 8. **`diabetes_data.csv`**: Dataset utilizado para predecir si un paciente tiene o no diabetes. Cada fila del archivo representa un paciente con varias características médicas y demográficas, y la columna objetivo indica la presencia o no de diabetes.
 
 ## Flujo de Ejecución
