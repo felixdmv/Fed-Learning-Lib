@@ -87,6 +87,97 @@ testset = CustomDataset(X_test, y_test)
 trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
 testloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 
+
+class Client(NumPyClient):    
+    def __init__(self, model, trainloader, testloader):
+        self.model = model
+        self.trainloader = trainloader
+        self.testloader = testloader
+        self.criterion = nn.BCELoss()
+        self.optimizer = Adam(self.model.parameters(), lr=learning_rate)
+
+    def get_parameters(self, config) -> List[np.ndarray]:
+        return [val.cpu().numpy() for val in self.model.state_dict().values()]
+
+    def set_parameters(self, parameters):
+        params_dict = zip(self.model.state_dict().keys(), parameters)
+        state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
+        self.model.load_state_dict(state_dict, strict=True)
+
+    def fit(self, parameters, config):
+        self.set_parameters(parameters)
+        self.model.train()
+
+        for epoch in range(epochs):
+            for batch in self.trainloader:
+                X_batch, y_batch = batch
+                y_batch = y_batch.unsqueeze(1)  # Ensure target size is [batch_size, 1]
+                X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
+
+                self.optimizer.zero_grad()
+                outputs = self.model(X_batch)
+                loss = self.criterion(outputs, y_batch.float())
+                loss.backward()
+                self.optimizer.step()
+
+        datetime = pd.Timestamp.now().strftime("%Y%m%d-%H%M%S")
+        model_scripted = torch.jit.script(self.model)
+        model_file_path = os.path.join(save_model_directory, f"client_{args.partition_id}_{datetime}.pth")
+        os.makedirs(os.path.dirname(model_file_path), exist_ok=True)
+        torch.save(self.model.state_dict(), model_file_path)
+        model_scripted.save(model_file_path)
+        print(f"Model saved to {model_file_path}")
+
+        return self.get_parameters(config), len(self.trainloader.dataset), {}
+
+    def evaluate(self, parameters, config):
+        self.set_parameters(parameters)
+        self.model.eval()
+
+        loss = 0.0
+        correct = 0
+        total = 0
+        all_preds = []
+        all_labels = []
+
+        with torch.no_grad():
+            for X_batch, y_batch in self.testloader:
+                X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
+                y_batch = y_batch.unsqueeze(1)
+                outputs = self.model(X_batch)
+                loss += self.criterion(outputs, y_batch.float()).item()
+                predicted = (outputs > 0.5).int()
+                total += y_batch.size(0)
+                correct += (predicted == y_batch).sum().item()
+                all_preds.extend(predicted.cpu().numpy())
+                all_labels.extend(y_batch.cpu().numpy())
+
+        accuracy = correct / total
+        precision = precision_score(all_labels, all_preds)
+        recall = recall_score(all_labels, all_preds)
+        f1 = f1_score(all_labels, all_preds)
+        loss /= len(self.testloader.dataset)
+
+        metrics = {
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1,
+            "loss": loss
+        }
+
+        return float(loss), len(self.testloader.dataset), metrics
+
+
+model = create_model(input_dim, hidden_dim, num_layers, output_dim, DEVICE)
+client = Client(model, trainloader, testloader)
+
+if __name__ == "__main__":
+    start_client(server_address=args.server_address, client=client.to_client())
+
+
+
+
 # class Client(NumPyClient):
 #     def __init__(self, model, trainloader, testloader):
 #         self.model = model
@@ -177,91 +268,3 @@ testloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 #         }
         
 #         return float(loss), len(self.testloader.dataset), metrics
-
-
-class Client(NumPyClient):    
-    def __init__(self, model, trainloader, testloader):
-        self.model = model
-        self.trainloader = trainloader
-        self.testloader = testloader
-        self.criterion = nn.BCELoss()
-        self.optimizer = Adam(self.model.parameters(), lr=learning_rate)
-
-    def get_parameters(self, config) -> List[np.ndarray]:
-        return [val.cpu().numpy() for val in self.model.state_dict().values()]
-
-    def set_parameters(self, parameters):
-        params_dict = zip(self.model.state_dict().keys(), parameters)
-        state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
-        self.model.load_state_dict(state_dict, strict=True)
-
-    def fit(self, parameters, config):
-        self.set_parameters(parameters)
-        self.model.train()
-
-        for epoch in range(epochs):
-            for batch in self.trainloader:
-                X_batch, y_batch = batch
-                y_batch = y_batch.unsqueeze(1)  # Ensure target size is [batch_size, 1]
-                X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
-
-                self.optimizer.zero_grad()
-                outputs = self.model(X_batch)
-                loss = self.criterion(outputs, y_batch.float())
-                loss.backward()
-                self.optimizer.step()
-
-        datetime = pd.Timestamp.now().strftime("%Y%m%d-%H%M%S")
-        model_scripted = torch.jit.script(self.model)
-        model_file_path = os.path.join(save_model_directory, f"client_{args.partition_id}_{datetime}.pth")
-        os.makedirs(os.path.dirname(model_file_path), exist_ok=True)
-        torch.save(self.model.state_dict(), model_file_path)
-        model_scripted.save(model_file_path)
-        print(f"Model saved to {model_file_path}")
-
-        return self.get_parameters(config), len(self.trainloader.dataset), {}
-
-    def evaluate(self, parameters, config):
-        self.set_parameters(parameters)
-        self.model.eval()
-
-        loss = 0.0
-        correct = 0
-        total = 0
-        all_preds = []
-        all_labels = []
-
-        with torch.no_grad():
-            for X_batch, y_batch in self.testloader:
-                X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
-                y_batch = y_batch.unsqueeze(1)
-                outputs = self.model(X_batch)
-                loss += self.criterion(outputs, y_batch.float()).item()
-                predicted = (outputs > 0.5).int()
-                total += y_batch.size(0)
-                correct += (predicted == y_batch).sum().item()
-                all_preds.extend(predicted.cpu().numpy())
-                all_labels.extend(y_batch.cpu().numpy())
-
-        accuracy = correct / total
-        precision = precision_score(all_labels, all_preds)
-        recall = recall_score(all_labels, all_preds)
-        f1 = f1_score(all_labels, all_preds)
-        loss /= len(self.testloader.dataset)
-
-        metrics = {
-            "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1_score": f1,
-            "loss": loss
-        }
-
-        return float(loss), len(self.testloader.dataset), metrics
-
-
-model = create_model(input_dim, hidden_dim, num_layers, output_dim, DEVICE)
-client = Client(model, trainloader, testloader)
-
-if __name__ == "__main__":
-    start_client(server_address=args.server_address, client=client.to_client())
