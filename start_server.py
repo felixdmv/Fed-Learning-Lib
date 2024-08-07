@@ -30,6 +30,7 @@ strategy_name = configuracion['training']['strategy']
 learning_rate = configuracion['training']['learning_rate']
 epochs = configuracion['training']['epochs']
 local_steps = configuracion['training']['local_steps']
+prox_mu = configuracion['training']['prox_mu']
 
 def create_strategy(strategy_name: str, model_config: Dict[str, Any], training_config: Dict[str, Any], server_config: Dict[str, Any]) -> fl.server.strategy.Strategy:
     """Create an instance of the federated learning strategy based on the strategy name."""
@@ -50,15 +51,11 @@ def create_strategy(strategy_name: str, model_config: Dict[str, Any], training_c
         
         elif strategy_name == 'fedProx':
             return FedProx(
-                mu=training_config.get("prox_mu", 0.9),
+                prox_mu=prox_mu,
                 save_model_directory=save_model_directory
             )
         
         elif strategy_name == 'fedNova':
-            # return FedNova(
-            #     save_model_directory=save_model_directory,
-            #     handle_aggregated_parameters=handle_aggregated_parameters
-            # )
             return FedNova(
                 save_model_directory=save_model_directory, 
                 handle_aggregated_parameters=handle_aggregated_parameters, 
@@ -74,11 +71,13 @@ def create_strategy(strategy_name: str, model_config: Dict[str, Any], training_c
         elif strategy_name == 'scaffold':
             return Scaffold(
                 save_model_directory=save_model_directory,
-                handle_aggregated_parameters=handle_aggregated_parameters,
+                learning_rate=learning_rate,
                 local_steps=local_steps
             )
+        
         else:
             raise ValueError(f"Strategy {strategy_name} not supported")
+        
     except Exception as e:
         print(f"Error creating strategy {strategy_name}: {e}")
         traceback.print_exc()

@@ -2,7 +2,7 @@ import os
 import logging
 import numpy as np
 import torch
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Any
 from flwr.common import Parameters, parameters_to_ndarrays, ndarrays_to_parameters
 from flwr.server.strategy import FedAvg
 from flwr.server.client_proxy import ClientProxy
@@ -27,16 +27,6 @@ save_model_directory = config['model']['save_model_directory']
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def parameters_to_state_dict(aggregated_parameters, model):
-    try:
-        state_dict = model.state_dict()
-        parameter_tensors = parameters_to_ndarrays(aggregated_parameters)
-        for name, param in zip(state_dict.keys(), parameter_tensors):
-            state_dict[name] = torch.tensor(param)
-        return state_dict
-    except Exception as e:
-        logging.error("Error converting parameters to state_dict:", exc_info=True)
-        traceback.print_exc()
 
 def validate_parameters(aggregated_parameters):
     try:
@@ -73,6 +63,18 @@ def log_parameters(parameters: Parameters):
         logging.error("Error logging parameters:", exc_info=True)
         traceback.print_exc()
 
+def parameters_to_state_dict(aggregated_parameters, model):
+    try:
+        state_dict = model.state_dict()
+        parameter_tensors = parameters_to_ndarrays(aggregated_parameters)
+        for name, param in zip(state_dict.keys(), parameter_tensors):
+            state_dict[name] = torch.tensor(param)
+        return state_dict
+    except Exception as e:
+        logging.error("Error converting parameters to state_dict:", exc_info=True)
+        traceback.print_exc()
+        return None
+
 class Scaffold(FedAvg):
     def __init__(self, save_model_directory: str, learning_rate: float, local_steps: int):
         super().__init__()
@@ -84,38 +86,55 @@ class Scaffold(FedAvg):
     def initialize_global_control(self, model_parameters):
         self.global_control = [np.zeros_like(param) for param in model_parameters]
 
-    def configure_fit(self, server_round: int, parameters, client_manager) -> List[Tuple[ClientProxy, FitIns]]:
-        config = {"local_steps": self.local_steps, "learning_rate": self.learning_rate, "global_control": self.global_control}
-        return [(client, FitIns(parameters, config)) for client in client_manager.clients.values()]
+    def aggregate_fit(self, server_round: int, results: List[Tuple[Any, Dict[str, torch.Tensor]]], failures: List[Tuple[int, Exception]]) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
+        num_clients = len(results)
+        if num_clients == 0:
+            raise ValueError("No clients available for aggregation")
 
-    def aggregate_fit(self, server_round: int, results: List[Tuple[ClientProxy, FitRes]], failures: List[Tuple[int, Exception]]) -> Parameters:
-        if not results:
-            return super().aggregate_fit(server_round, results, failures)
+        total_examples = sum(result['num_examples'] for _, result in results)
 
-        if self.global_control is None:
-            self.initialize_global_control(parameters_to_ndarrays(results[0][1].parameters))
+        model = create_model(input_dim, hidden_dim, num_layers, output_dim, DEVICE)
+        model_state_dict = model.state_dict()
 
-        aggregated_parameters = super().aggregate_fit(server_round, results, failures)
+        if self.parameter_shapes is None:
+            self.parameter_shapes = {name: param.shape for name, param in model_state_dict.items()}
 
-        new_global_control = [np.zeros_like(control) for control in self.global_control]
+        aggregated_parameters_ndarrays = [np.zeros_like(param.cpu().numpy()) for param in model_state_dict.values()]
+        aggregated_control_ndarrays = [np.zeros_like(param.cpu().numpy()) for param in model_state_dict.values()]
+
         for client, fit_res in results:
-            client_control = parameters_to_ndarrays(fit_res.metrics["client_control"])
-            for i, (control, new_control) in enumerate(zip(client_control, new_global_control)):
-                new_global_control[i] += (control - self.global_control[i]) / len(results)
+            num_examples_client = fit_res['num_examples']
 
-        self.global_control = new_global_control
+            client_parameters = [param.cpu().numpy() for param in fit_res['parameters']]
+            client_control_params = [param.cpu().numpy() for param in fit_res['control_params']]
 
-        self._save_model(server_round, aggregated_parameters)
-        return aggregated_parameters
+            for i, param in enumerate(client_parameters):
+                aggregated_parameters_ndarrays[i] += param * (num_examples_client / total_examples)
 
-    def _save_model(self, rnd: int, aggregated_parameters):
-        model = create_model(config['model']['input_dim'], config['model']['hidden_dim'], config['model']['num_layers'], config['model']['output_dim'], torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-        state_dict = {name: torch.tensor(param) for name, param in zip(model.state_dict().keys(), parameters_to_ndarrays(aggregated_parameters))}
-        model.load_state_dict(state_dict)
-        model_scripted = torch.jit.script(model)
-        round_dir = os.path.join(self.save_model_directory, f'round_{rnd}')
+            for i, control_param in enumerate(client_control_params):
+                aggregated_control_ndarrays[i] += control_param * (num_examples_client / total_examples)
+
+        aggregated_parameters = [torch.tensor(param).to(DEVICE) for param in aggregated_parameters_ndarrays]
+        aggregated_control_params = [torch.tensor(param).to(DEVICE) for param in aggregated_control_ndarrays]
+
+        aggregated_parameters_dict = {name: param for name, param in zip(model_state_dict.keys(), aggregated_parameters)}
+        aggregated_control_params_dict = {name: param for name, param in zip(model_state_dict.keys(), aggregated_control_params)}
+
+        model.load_state_dict(aggregated_parameters_dict)
+
+        round_dir = os.path.join(self.save_model_directory, f'round_{server_round}')
         os.makedirs(round_dir, exist_ok=True)
+
+        model_scripted = torch.jit.script(model)
         model_scripted.save(os.path.join(round_dir, 'aggregated_model.pth'))
+        logging.info(f'Saved global model for round {server_round}: {model_scripted}.pth')
+
+        self.previous_model_parameters = aggregated_parameters_dict
+        self.previous_control_params = aggregated_control_params_dict
+
+        return aggregated_parameters_dict, {}
+
+
 
     def aggregate_evaluate(self, server_round: int, results: List[Tuple[ClientProxy, EvaluateRes]], failures: List[Tuple[int, Exception]]) -> Tuple[Optional[float], Dict[str, float]]:
         aggregated_loss, aggregated_metrics = super().aggregate_evaluate(server_round, results, failures)
