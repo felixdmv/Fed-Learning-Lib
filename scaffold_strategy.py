@@ -86,27 +86,31 @@ class Scaffold(FedAvg):
     def initialize_global_control(self, model_parameters):
         self.global_control = [np.zeros_like(param) for param in model_parameters]
 
-    def aggregate_fit(self, server_round: int, results: List[Tuple[Any, Dict[str, torch.Tensor]]], failures: List[Tuple[int, Exception]]) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
+    def aggregate_fit(self, server_round: int, results: List[Tuple[Any, FitRes]], failures: List[Tuple[int, Exception]]) -> Tuple[Parameters, Dict[str, float]]:
         num_clients = len(results)
         if num_clients == 0:
             raise ValueError("No clients available for aggregation")
 
-        total_examples = sum(result['num_examples'] for _, result in results)
+        total_examples = sum(fit_res.num_examples for _, fit_res in results)
 
         model = create_model(input_dim, hidden_dim, num_layers, output_dim, DEVICE)
         model_state_dict = model.state_dict()
-
-        if self.parameter_shapes is None:
-            self.parameter_shapes = {name: param.shape for name, param in model_state_dict.items()}
 
         aggregated_parameters_ndarrays = [np.zeros_like(param.cpu().numpy()) for param in model_state_dict.values()]
         aggregated_control_ndarrays = [np.zeros_like(param.cpu().numpy()) for param in model_state_dict.values()]
 
         for client, fit_res in results:
-            num_examples_client = fit_res['num_examples']
+            num_examples_client = fit_res.num_examples
 
-            client_parameters = [param.cpu().numpy() for param in fit_res['parameters']]
-            client_control_params = [param.cpu().numpy() for param in fit_res['control_params']]
+            # Convert Parameters object to list of ndarrays
+            client_parameters = parameters_to_ndarrays(fit_res.parameters)
+
+            # Handle the case where control_params might be missing
+            if 'control_params' in fit_res.metrics:
+                client_control_params = parameters_to_ndarrays(fit_res.metrics['control_params'])
+            else:
+                logging.warning(f"Client {client} did not send control_params. Using zeros as default.")
+                client_control_params = [np.zeros_like(param) for param in client_parameters]
 
             for i, param in enumerate(client_parameters):
                 aggregated_parameters_ndarrays[i] += param * (num_examples_client / total_examples)
@@ -132,7 +136,10 @@ class Scaffold(FedAvg):
         self.previous_model_parameters = aggregated_parameters_dict
         self.previous_control_params = aggregated_control_params_dict
 
-        return aggregated_parameters_dict, {}
+        # Convert aggregated parameters back to a Parameters object
+        aggregated_parameters_obj = ndarrays_to_parameters([param.cpu().numpy() for param in aggregated_parameters])
+
+        return aggregated_parameters_obj, {}
 
 
 
