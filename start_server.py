@@ -1,10 +1,7 @@
 import flwr as fl
 import os
-import yaml
 from typing import Dict, Any
-from io import BytesIO
-import numpy as np
-from flwr.common import Parameters, ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common import Parameters, parameters_to_ndarrays
 from strategies.fedavg_strategy import FedAvg
 from strategies.fedprox_strategy import FedProx
 from strategies.fednova_strategy import FedNova
@@ -85,6 +82,14 @@ def handle_aggregated_parameters(aggregated_parameters: Parameters) -> None:
         traceback.print_exc()
 
 def start_server(config):
+    """
+    Starts the server for federated learning.
+    Args:
+        config (dict): A dictionary containing the configuration parameters for the server.
+    Raises:
+        Exception: If there is an error starting the server.
+    """
+    pass
     print("Starting server...")
     try:
         model_config = config['model']

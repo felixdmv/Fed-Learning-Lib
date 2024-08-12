@@ -10,21 +10,36 @@ import os
 import re
 import matplotlib.pyplot as plt
 from typing import Dict, Any, List
-
-# Cargar la configuración desde el archivo YAML
-def load_config(yaml_file: str) -> Dict[str, Any]:
-    with open(yaml_file, 'r') as file:
-        config = yaml.safe_load(file)
-    return config
+from utils import load_config
 
 
 # Función para ordenar naturalmente los nombres de archivos y carpetas
 def natural_sort_key(s: str) -> List:
+    """
+    Generates a key for natural sorting of strings.
+
+    Args:
+        s (str): The string to generate the key for.
+
+    Returns:
+        List: The generated key for natural sorting.
+
+    """
     return [int(text) if text.isdigit() else text.lower() for text in re.split('(\d+)', s)]
 
 
 # Preprocesamiento de datos
 def preprocess_data(csv_file: str):
+    """
+    Preprocesses the data from a CSV file.
+
+    Parameters:
+    - csv_file (str): The path to the CSV file.
+
+    Returns:
+    - X (numpy.ndarray): The preprocessed feature matrix.
+    - y (numpy.ndarray): The preprocessed target vector.
+    """
     df = pd.read_csv(csv_file)
     X = df.drop(columns=['diabetesMed_Yes']).values
     y = df['diabetesMed_Yes'].values
@@ -34,9 +49,36 @@ def preprocess_data(csv_file: str):
     return X, y
 
 def split_data(X, y, test_size=0.4, random_state=2):
+    """
+    Splits the data into training and testing sets.
+
+    Parameters:
+    - X: The input features.
+    - y: The target variable.
+    - test_size: The proportion of the data to be used for testing. Default is 0.4.
+    - random_state: The seed used by the random number generator. Default is 2.
+
+    Returns:
+    - X_train: The training set of input features.
+    - X_test: The testing set of input features.
+    - y_train: The training set of target variable.
+    - y_test: The testing set of target variable.
+    """
     return train_test_split(X, y, test_size=test_size, random_state=random_state)
 
 class CustomDataset(Dataset):
+    """
+    A custom dataset class for handling X and y data.
+    Args:
+        X (list or array-like): The input features.
+        y (list or array-like): The target labels.
+    Attributes:
+        X (torch.Tensor): The input features as a torch tensor.
+        y (torch.Tensor): The target labels as a torch tensor.
+    Methods:
+        __len__(): Returns the length of the dataset.
+        __getitem__(idx): Returns the item at the given index.
+    """
     def __init__(self, X, y):
         self.X = torch.tensor(X, dtype=torch.float32)
         self.y = torch.tensor(y, dtype=torch.long)
@@ -83,6 +125,15 @@ def evaluate_model(model: nn.Module, dataloader: DataLoader) -> Dict[str, float]
     }
 
 def evaluate_all_models(model_dir: str, dataloader: DataLoader):
+    """
+    Evaluates all models found in the specified directory using the given dataloader.
+    Args:
+        model_dir (str): The directory path where the models are located.
+        dataloader (DataLoader): The dataloader used to evaluate the models.
+    Returns:
+        dict: A dictionary containing the evaluation results for each model found. The keys are the model names
+        (extracted from the file names) and the values are lists of accuracy scores.
+    """
     results = {}
     model_files_found = False
 
@@ -120,7 +171,15 @@ def evaluate_all_models(model_dir: str, dataloader: DataLoader):
         print("No model files found in the directory.")
     return results
 
+
 def plot_accuracy(results):
+    """
+    Plots the accuracy of each client over rounds.
+    Parameters:
+    - results (dict): A dictionary containing the accuracy results for each client.
+    Returns:
+    - None
+    """
     plt.figure(figsize=(12, 6))
     max_length = max(len(acc_list) for acc_list in results.values())
 

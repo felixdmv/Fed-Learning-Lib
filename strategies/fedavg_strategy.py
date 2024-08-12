@@ -16,6 +16,7 @@ from typing import Union, Optional
 from flwr.server.client_proxy import ClientProxy
 from model import create_model
 from utils import load_config
+from utils import parameters_to_state_dict
 
 
 # Load configuration

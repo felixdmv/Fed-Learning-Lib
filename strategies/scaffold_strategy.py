@@ -7,15 +7,11 @@ from flwr.common import Parameters, parameters_to_ndarrays, ndarrays_to_paramete
 from flwr.server.strategy import FedAvg
 from flwr.server.client_proxy import ClientProxy
 from model import create_model
-from utils import load_config
-from flwr.common import FitRes, FitIns, EvaluateRes
-import yaml
-import traceback
+from utils import load_config, parameters_to_ndarrays
+from flwr.common import FitRes, EvaluateRes
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
 
 config = load_config('./config/configuracion.yaml')
 
@@ -27,53 +23,6 @@ save_model_directory = config['model']['save_model_directory']
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-
-def validate_parameters(aggregated_parameters):
-    try:
-        ndarrays = parameters_to_ndarrays(aggregated_parameters)
-        for ndarray in ndarrays:
-            logging.info("----------------------------------------------------------------")
-            logging.info(ndarray.shape)
-            logging.info(ndarray[:5])
-    except Exception as e:
-        logging.error("Error validating aggregated parameters:", exc_info=True)
-        traceback.print_exc()
-
-def validate_and_unpack_parameters(aggregated_parameters: Parameters):
-    try:
-        ndarrays = parameters_to_ndarrays(aggregated_parameters)
-        for i, ndarray in enumerate(ndarrays):
-            logging.info(f"Shape of ndarray {i}: {ndarray.shape}")
-        return ndarrays
-    except Exception as e:
-        logging.error("Error unpacking parameters:", exc_info=True)
-        traceback.print_exc()
-        return None
-
-def log_parameters(parameters: Parameters):
-    try:
-        for i, tensor in enumerate(parameters.tensors):
-            try:
-                tensor_array = np.frombuffer(tensor, dtype=np.float32)
-                logging.info(f"Tensor {i} shape: {tensor_array.shape}, values: {tensor_array[:5]}")  # Show first 5 values
-            except ValueError as ve:
-                logging.error(f"ValueError while logging tensor {i}:", exc_info=True)
-                traceback.print_exc()
-    except Exception as e:
-        logging.error("Error logging parameters:", exc_info=True)
-        traceback.print_exc()
-
-def parameters_to_state_dict(aggregated_parameters, model):
-    try:
-        state_dict = model.state_dict()
-        parameter_tensors = parameters_to_ndarrays(aggregated_parameters)
-        for name, param in zip(state_dict.keys(), parameter_tensors):
-            state_dict[name] = torch.tensor(param)
-        return state_dict
-    except Exception as e:
-        logging.error("Error converting parameters to state_dict:", exc_info=True)
-        traceback.print_exc()
-        return None
 
 class Scaffold(FedAvg):
     def __init__(self, save_model_directory: str, learning_rate: float, local_steps: int):
