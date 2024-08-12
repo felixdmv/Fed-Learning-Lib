@@ -16,7 +16,7 @@ from utils import load_config
 
 
 # Load configuration
-config = load_config('configuracion.yaml')
+config = load_config('./config/configuracion.yaml')
 
 input_dim = config['model']['input_dim']
 hidden_dim = config['model']['hidden_dim']

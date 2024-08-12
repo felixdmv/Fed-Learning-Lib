@@ -25,7 +25,7 @@
 #         logging.error(f"Error loading config file {yaml_file}: {e}")
 #         traceback.print_exc()
 
-# config = load_config('configuracion.yaml')
+# config = load_config('./config/configuracion.yaml')
 
 # input_dim = config['model']['input_dim']
 # hidden_dim = config['model']['hidden_dim']
@@ -202,7 +202,7 @@ import traceback
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-config = load_config('configuracion.yaml')
+config = load_config('./config/configuracion.yaml')
 
 input_dim = config['model']['input_dim']
 hidden_dim = config['model']['hidden_dim']
