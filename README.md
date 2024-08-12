@@ -6,20 +6,47 @@ Este proyecto está diseñado para implementar un sistema de aprendizaje federad
 
 El proyecto se organiza en:
 
-1. **`main.py`**: Script principal que coordina la ejecución del servidor y los clientes.
-2. **`start_server.py`**: Inicia el servidor federado con la estrategia de agregación configurada.
-3. **`start_clients.py`**: Inicia múltiples instancias de clientes federados.
-4. **`fedavg_strategy.py`**, **`fedprox_strategy.py`**, **`fednova_strategy.py`**: Implementaciones de diferentes estrategias de agregación federada:
-   - **FedAvg**: (https://arxiv.org/abs/1602.05629)
-   - **FedProx**: (https://arxiv.org/abs/1812.06127)
-   - **FedNova**: (https://arxiv.org/abs/2007.07481)
-   - **Scaffold**: (https://proceedings.mlr.press/v119/karimireddy20a.html)
-   - **Custom**
-5. **`fed_client.py`**: Implementa la lógica del cliente federado, incluyendo el entrenamiento del modelo y la comunicación con el servidor.
-6. **`model.py`**: Define el modelo de red neuronal utilizado para el entrenamiento.
-9. **`utils.py`**: Funciones de utilidad comunes a varias estrategias.
-7. **`configuracion.yaml`**: Archivo de configuración que especifica los parámetros del modelo, entrenamiento, servidor y clientes.
-8. **`diabetes_data.csv`**: Dataset utilizado para predecir si un paciente tiene o no diabetes. Cada fila del archivo representa un paciente con varias características médicas y demográficas, y la columna objetivo indica la presencia o no de diabetes.
+### 1. **`main.py`**
+- **Descripción:** Script principal que coordina la ejecución del servidor y los clientes.
+
+### 2. **`start_server.py`**
+- **Descripción:** Inicia el servidor federado con la estrategia de agregación configurada.
+
+### 3. **`start_clients.py`**
+- **Descripción:** Inicia múltiples instancias de clientes federados.
+
+### 4. **`fed_client.py`**
+- **Descripción:** Implementa la lógica del cliente federado, incluyendo el entrenamiento del modelo y la comunicación con el servidor.
+
+### 5. **`model.py`**
+- **Descripción:** Define el modelo de red neuronal utilizado para el entrenamiento.
+
+### 6. **`utils.py`**
+- **Descripción:** Funciones de utilidad comunes a varias estrategias.
+
+### 7. **`configuracion.yaml`**
+- **Descripción:** Archivo de configuración que especifica los parámetros del modelo, entrenamiento, servidor y clientes.
+
+### 8. **`/data`**
+- **Descripción:** Carpeta que contiene el dataset utilizado en el proyecto.
+
+  - **`diabetes_data.csv`**: Dataset utilizado para predecir si un paciente tiene o no diabetes. Cada fila del archivo representa un paciente con varias características médicas y demográficas, y la columna objetivo indica la presencia o no de diabetes.
+
+### 9. **`/strategies`**
+- **Descripción:** Carpeta que contiene implementaciones de diferentes estrategias de agregación federada.
+
+  - **`fedavg_strategy.py`**: Implementación de la estrategia FedAvg ([Referencia](https://arxiv.org/abs/1602.05629)).
+  - **`fedprox_strategy.py`**: Implementación de la estrategia FedProx ([Referencia](https://arxiv.org/abs/1812.06127)).
+  - **`fednova_strategy.py`**: Implementación de la estrategia FedNova ([Referencia](https://arxiv.org/abs/2007.07481)).
+  - **`scaffold_strategy.py`**: Implementación de la estrategia Scaffold ([Referencia](https://proceedings.mlr.press/v119/karimireddy20a.html)).
+  - **`custom_strategy.py`**: Implementación de una estrategia híbrida de ponderación personalizada con la que se han obtenido los mejores resultados de media.
+
+### 10. **`/test`**
+- **Descripción:** Carpeta que contiene scripts de evaluación de los modelos obtenidos tras el aprendizaje federado.
+
+### 11. **`/results`**
+- **Descripción:** Carpeta que contiene los resultados de las exactitudes a lo largo de las rondas de los clientes y del modelo combinado.
+
 
 ## Flujo de Ejecución
 
