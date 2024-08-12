@@ -2,16 +2,12 @@ import os
 import subprocess
 import yaml
 from argparse import ArgumentParser
+from utils import load_config
 
-# Function to load YAML configuration
-def load_configuracion(path="configuracion.yaml"):
-    with open(path, 'r') as file:
-        configuracion = yaml.safe_load(file)
-    return configuracion
+# Load configuration
+configuracion = load_config('./config/configuracion.yaml')
 
 parser = ArgumentParser(description="Flower Client")
-
-configuracion = load_configuracion('configuracion.yaml')
 
 # Configuraciones
 num_clients = configuracion['client']['num_clients']

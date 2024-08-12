@@ -5,26 +5,16 @@ from typing import Dict, Any
 from io import BytesIO
 import numpy as np
 from flwr.common import Parameters, ndarrays_to_parameters, parameters_to_ndarrays
-from fedavg_strategy import FedAvg
-from fedprox_strategy import FedProx
-from fednova_strategy import FedNova
-from custom_strategy import Custom
-from scaffold_strategy import Scaffold
+from strategies.fedavg_strategy import FedAvg
+from strategies.fedprox_strategy import FedProx
+from strategies.fednova_strategy import FedNova
+from strategies.custom_strategy import Custom
+from strategies.scaffold_strategy import Scaffold
+from utils import load_config
 import traceback
 
-def load_config(yaml_file: str) -> Dict[str, Any]:
-    print(f"Attempting to load configuration from {yaml_file}...")
-    try:
-        with open(yaml_file, 'r') as file:
-            config = yaml.safe_load(file)
-        print("Configuration loaded successfully.")
-        return config
-    except Exception as e:
-        print(f"Error loading configuration: {e}")
-        traceback.print_exc()
-        raise
 
-configuracion = load_config('configuracion.yaml')
+configuracion = load_config('./config/configuracion.yaml')
 
 strategy_name = configuracion['training']['strategy']
 learning_rate = configuracion['training']['learning_rate']
@@ -117,7 +107,7 @@ def start_server(config):
 if __name__ == "__main__":
     print("Loading configuration...")
     try:
-        config = load_config('configuracion.yaml')
+        config = load_config('./config/configuracion.yaml')
         start_server(config)
     except Exception as e:
         print(f"Error in main execution: {e}")
