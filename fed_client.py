@@ -13,7 +13,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 import pandas as pd
 from argparse import ArgumentParser
 import yaml
-from typing import Dict, Any, List
+from typing import List
 from model import create_model
 from utils import load_config
 import traceback
