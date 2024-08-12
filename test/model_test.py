@@ -9,7 +9,7 @@ import yaml
 import os
 import re
 import matplotlib.pyplot as plt
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 # Cargar la configuración desde el archivo YAML
 def load_config(yaml_file: str) -> Dict[str, Any]:
@@ -17,22 +17,11 @@ def load_config(yaml_file: str) -> Dict[str, Any]:
         config = yaml.safe_load(file)
     return config
 
-# Definir el modelo
-class SimpleBinaryClassifier(nn.Module):
-    def __init__(self, input_size, hidden_dim, num_layers, output_size, dropout_rate):
-        super(SimpleBinaryClassifier, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_dim)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(dropout_rate)
-        self.fc2 = nn.Linear(hidden_dim, output_size)
-        self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
-        x = self.sigmoid(x)  # Convertir la salida a probabilidad
-        return x
+# Función para ordenar naturalmente los nombres de archivos y carpetas
+def natural_sort_key(s: str) -> List:
+    return [int(text) if text.isdigit() else text.lower() for text in re.split('(\d+)', s)]
+
 
 # Preprocesamiento de datos
 def preprocess_data(csv_file: str):
@@ -96,9 +85,14 @@ def evaluate_model(model: nn.Module, dataloader: DataLoader) -> Dict[str, float]
 def evaluate_all_models(model_dir: str, dataloader: DataLoader):
     results = {}
     model_files_found = False
+
     for root, dirs, files in os.walk(model_dir):
+        # Ordenar directorios y archivos naturalmente
+        dirs.sort(key=natural_sort_key)
+        files.sort(key=natural_sort_key)
+        
         for file in files:
-            if file.endswith('.pth'):  
+            if file.endswith('.pth'):
                 model_files_found = True
                 model_path = os.path.join(root, file)
                 print(f"Evaluating model: {model_path}")
@@ -106,7 +100,6 @@ def evaluate_all_models(model_dir: str, dataloader: DataLoader):
                     model = load_model(model_path)
                     metrics = evaluate_model(model, dataloader)
                     
-                    # Detectar el nombre base del modelo usando una expresión regular
                     match = re.match(r'(client_\d+|aggregated_model)', file)
                     if match:
                         model_name = match.group(1)
