@@ -27,6 +27,15 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class FedNova(FedAvg):
     def __init__(self, save_model_directory: str, learning_rate: float, epochs: int, handle_aggregated_parameters: Optional[Callable[[Dict[str, torch.Tensor]], None]] = None):
+        """
+        Initializes the FedNovaStrategy object.
+
+        Args:
+            save_model_directory (str): The directory to save the model.
+            learning_rate (float): The learning rate for the strategy.
+            epochs (int): The number of epochs for training.
+            handle_aggregated_parameters (Optional[Callable[[Dict[str, torch.Tensor]], None]], optional): A function to handle aggregated parameters. Defaults to None.
+        """
         super().__init__()
         self.save_model_directory = save_model_directory
         self.learning_rate = learning_rate
@@ -37,6 +46,15 @@ class FedNova(FedAvg):
         self.handle_aggregated_parameters = handle_aggregated_parameters
 
     def aggregate_fit(self, server_round: int, results: List[Tuple[ClientProxy, FitRes]], failures: List[Tuple[int, Exception]]) -> Tuple[Parameters, Dict[str, float]]:
+        """
+        Aggregates the fit results from multiple clients and returns the aggregated parameters and metrics.
+        Args:
+            server_round (int): The current round of the federated learning server.
+            results (List[Tuple[ClientProxy, FitRes]]): A list of tuples containing the client proxy and the fit results.
+            failures (List[Tuple[int, Exception]]): A list of tuples containing the index of the failed client and the corresponding exception.
+        Returns:
+            Tuple[Parameters, Dict[str, float]]: A tuple containing the aggregated parameters and metrics.
+        """
         num_clients = len(results)
         total_examples = sum(result.num_examples for _, result in results)
 
@@ -85,6 +103,18 @@ class FedNova(FedAvg):
         return aggregated_parameters, aggregated_metrics
 
     def _validate_model_outputs(self, model):
+        """
+        Validates the outputs of the given model.
+
+        Parameters:
+            model (torch.nn.Module): The model to validate.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         dummy_input = torch.randn(1, input_dim).to(DEVICE)
         output = model(dummy_input)
         if not torch.all((output >= 0) & (output <= 1)):
@@ -96,6 +126,15 @@ class FedNova(FedAvg):
         results: List[Tuple[ClientProxy, Metrics]],
         failures: List[Union[Tuple[ClientProxy, Metrics], BaseException]],
     ) -> Tuple[Optional[float], Dict[str, float]]:
+        """
+        Aggregates and evaluates the results from the clients.
+        Args:
+            server_round (int): The current round of the server.
+            results (List[Tuple[ClientProxy, Metrics]]): The list of results from the clients.
+            failures (List[Union[Tuple[ClientProxy, Metrics], BaseException]]): The list of failures from the clients.
+        Returns:
+            Tuple[Optional[float], Dict[str, float]]: A tuple containing the aggregated loss and a dictionary of aggregated metrics.
+        """
         if not results:
             return None, {}
 

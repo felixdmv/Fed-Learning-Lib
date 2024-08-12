@@ -26,6 +26,14 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Scaffold(FedAvg):
     def __init__(self, save_model_directory: str, learning_rate: float, local_steps: int):
+        """
+        Initializes a ScaffoldStrategy object.
+
+        Args:
+            save_model_directory (str): The directory to save the model.
+            learning_rate (float): The learning rate for the strategy.
+            local_steps (int): The number of local steps for the strategy.
+        """
         super().__init__()
         self.save_model_directory = save_model_directory
         self.learning_rate = learning_rate
@@ -33,9 +41,27 @@ class Scaffold(FedAvg):
         self.global_control = None
 
     def initialize_global_control(self, model_parameters):
+        """
+        Initializes the global control list with zero-filled arrays of the same shape as the model parameters.
+
+        Parameters:
+            model_parameters (list): A list of model parameters.
+
+        Returns:
+            None
+        """
         self.global_control = [np.zeros_like(param) for param in model_parameters]
 
     def aggregate_fit(self, server_round: int, results: List[Tuple[Any, FitRes]], failures: List[Tuple[int, Exception]]) -> Tuple[Parameters, Dict[str, float]]:
+        """
+        Aggregates the fit results from multiple clients and returns the aggregated parameters and control parameters.
+        Args:
+            server_round (int): The current round of the server.
+            results (List[Tuple[Any, FitRes]]): The fit results from the clients.
+            failures (List[Tuple[int, Exception]]): The list of failures that occurred during the aggregation.
+        Returns:
+            Tuple[Parameters, Dict[str, float]]: A tuple containing the aggregated parameters and control parameters.
+        """
         num_clients = len(results)
         if num_clients == 0:
             raise ValueError("No clients available for aggregation")
@@ -93,6 +119,17 @@ class Scaffold(FedAvg):
 
 
     def aggregate_evaluate(self, server_round: int, results: List[Tuple[ClientProxy, EvaluateRes]], failures: List[Tuple[int, Exception]]) -> Tuple[Optional[float], Dict[str, float]]:
+        """
+        Aggregates the evaluation results from the clients and calculates the aggregated loss and accuracy.
+
+        Args:
+            server_round (int): The current round of the federated learning server.
+            results (List[Tuple[ClientProxy, EvaluateRes]]): The evaluation results from the clients.
+            failures (List[Tuple[int, Exception]]): The list of failures that occurred during evaluation.
+
+        Returns:
+            Tuple[Optional[float], Dict[str, float]]: A tuple containing the aggregated loss and a dictionary of aggregated metrics.
+        """
         aggregated_loss, aggregated_metrics = super().aggregate_evaluate(server_round, results, failures)
         accuracies = [res.metrics.get("accuracy", 0) * res.num_examples for _, res in results]
         num_examples = [res.num_examples for _, res in results]

@@ -53,7 +53,6 @@ parser.add_argument('--round', type=int, default=1, help="Current round number")
 args = parser.parse_args()
 
 # Load and preprocess data
-#df = pd.read_csv('processed_data.csv')
 df = pd.read_csv(config['client']['train_data_path'])
 X = df.drop(columns=['diabetesMed_Yes']).values
 y = df['diabetesMed_Yes'].values
@@ -69,6 +68,18 @@ partition_end = partition_start + partition_size if args.partition_id != num_cli
 X_train, X_test, y_train, y_test = train_test_split(X[partition_start:partition_end], y[partition_start:partition_end], test_size=0.2, random_state=2)
 
 class CustomDataset(Dataset):
+    """
+    A custom dataset class for handling X and y data.
+    Args:
+        X (list or array-like): The input features.
+        y (list or array-like): The target labels.
+    Attributes:
+        X (torch.Tensor): The input features as a torch tensor.
+        y (torch.Tensor): The target labels as a torch tensor.
+    Methods:
+        __len__(): Returns the length of the dataset.
+        __getitem__(idx): Returns the X and y values at the given index.
+    """
     def __init__(self, X, y):
         self.X = torch.tensor(X, dtype=torch.float32)
         self.y = torch.tensor(y, dtype=torch.long)
@@ -88,6 +99,14 @@ testloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 
 class Client(NumPyClient):    
     def __init__(self, model, trainloader, testloader):
+        """
+        Initializes a FedClient object.
+
+        Args:
+            model (torch.nn.Module): The model used for federated learning.
+            trainloader (torch.utils.data.DataLoader): The data loader for training data.
+            testloader (torch.utils.data.DataLoader): The data loader for testing data.
+        """
         self.model = model
         self.trainloader = trainloader
         self.testloader = testloader
@@ -95,9 +114,28 @@ class Client(NumPyClient):
         self.optimizer = Adam(self.model.parameters(), lr=learning_rate)
 
     def get_parameters(self, config) -> List[np.ndarray]:
+        """
+        Retrieves the parameters of the model.
+
+        Args:
+            config: The configuration object.
+
+        Returns:
+            A list of numpy arrays representing the parameters of the model.
+        """
         return [val.cpu().numpy() for val in self.model.state_dict().values()]
 
     def set_parameters(self, parameters):
+        """
+        Sets the parameters of the model with the given values.
+
+        Args:
+            parameters (list): A list of parameter values.
+
+        Raises:
+            Exception: If there is an error setting the parameters.
+
+        """
         try:
             params_dict = zip(self.model.state_dict().keys(), parameters)
             state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
@@ -107,6 +145,15 @@ class Client(NumPyClient):
             traceback.print_exc()
 
     def fit(self, parameters, config):
+        """
+        Fits the model to the training data.
+        Args:
+            parameters (list): The model parameters.
+            config (dict): The configuration settings.
+        Returns:
+            tuple: A tuple containing the updated parameters, the size of the training dataset, and an empty dictionary.
+        """
+        # code implementation...
         self.set_parameters(parameters)
         self.model.train()
 
@@ -133,6 +180,16 @@ class Client(NumPyClient):
         return self.get_parameters(config), len(self.trainloader.dataset), {}
 
     def evaluate(self, parameters, config):
+        """
+        Evaluates the model using the given parameters and configuration.
+        Args:
+            parameters (Tensor): The model parameters.
+            config (dict): The configuration settings.
+        Returns:
+            tuple: A tuple containing the loss, dataset size, and evaluation metrics.
+        Raises:
+            None
+        """
         self.set_parameters(parameters)
         self.model.eval()
 
@@ -176,89 +233,3 @@ client = Client(model, trainloader, testloader)
 
 if __name__ == "__main__":
     start_client(server_address=args.server_address, client=client.to_client())
-
-
-
-
-
-# class Client(NumPyClient):    
-#     def __init__(self, model, trainloader, testloader):
-#         self.model = model
-#         self.trainloader = trainloader
-#         self.testloader = testloader
-#         self.criterion = nn.BCELoss()
-#         self.optimizer = Adam(self.model.parameters(), lr=learning_rate)
-
-#     def get_parameters(self, config) -> List[np.ndarray]:
-#         return [val.cpu().numpy() for val in self.model.state_dict().values()]
-
-#     def set_parameters(self, parameters):
-#         params_dict = zip(self.model.state_dict().keys(), parameters)
-#         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
-#         self.model.load_state_dict(state_dict, strict=True)
-
-#     def fit(self, parameters, config):
-#         self.set_parameters(parameters)
-#         self.model.train()
-
-#         for epoch in range(epochs):
-#             for batch in self.trainloader:
-#                 X_batch, y_batch = batch
-#                 y_batch = y_batch.unsqueeze(1)  # Ensure target size is [batch_size, 1]
-#                 X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
-
-#                 self.optimizer.zero_grad()
-#                 outputs = self.model(X_batch)
-#                 loss = self.criterion(outputs, y_batch.float())
-#                 loss.backward()
-#                 self.optimizer.step()
-
-#         datetime = pd.Timestamp.now().strftime("%Y%m%d-%H%M%S")
-#         model_scripted = torch.jit.script(self.model)
-#         model_file_path = os.path.join(save_model_directory, f"client_{args.partition_id}_{datetime}.pth")
-#         os.makedirs(os.path.dirname(model_file_path), exist_ok=True)
-#         torch.save(self.model.state_dict(), model_file_path)
-#         model_scripted.save(model_file_path)
-#         print(f"Model saved to {model_file_path}")
-
-#         return self.get_parameters(config), len(self.trainloader.dataset), {}
-
-#     def evaluate(self, parameters, config):
-#         self.set_parameters(parameters)
-#         self.model.eval()
-
-#         loss = 0.0
-#         correct = 0
-#         total = 0
-#         all_preds = []
-#         all_labels = []
-
-#         with torch.no_grad():
-#             for X_batch, y_batch in self.testloader:
-#                 X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
-#                 y_batch = y_batch.unsqueeze(1)
-#                 outputs = self.model(X_batch)
-#                 loss += self.criterion(outputs, y_batch.float()).item()
-#                 predicted = (outputs > 0.5).int()
-#                 total += y_batch.size(0)
-#                 correct += (predicted == y_batch).sum().item()
-#                 all_preds.extend(predicted.cpu().numpy())
-#                 all_labels.extend(y_batch.cpu().numpy())
-
-#         accuracy = correct / total
-#         precision = precision_score(all_labels, all_preds)
-#         recall = recall_score(all_labels, all_preds)
-#         f1 = f1_score(all_labels, all_preds)
-#         loss /= len(self.testloader.dataset)
-
-#         metrics = {
-#             "accuracy": accuracy,
-#             "precision": precision,
-#             "recall": recall,
-#             "f1_score": f1,
-#             "loss": loss
-#         }
-
-#         return float(loss), len(self.testloader.dataset), metrics
-
-

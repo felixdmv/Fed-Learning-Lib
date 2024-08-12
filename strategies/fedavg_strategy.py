@@ -38,6 +38,11 @@ def parameters_to_state_dict(aggregated_parameters, model):
     return state_dict
 
 class FedAvg(fl.server.strategy.FedAvg):
+    """
+    Initializes the FedAvg strategy.
+    Args:
+        save_model_directory (str): The directory to save the models.
+    """
     def __init__(self, save_model_directory: str):
          super().__init__()
          self.save_model_directory = save_model_directory
@@ -45,6 +50,15 @@ class FedAvg(fl.server.strategy.FedAvg):
 
 
     def aggregate_fit(self, rnd: int, results: List[Tuple[Any, Dict[str, torch.Tensor]]], failures: List[Tuple[int, Exception]]) -> Dict[str, torch.Tensor]:
+        """
+        Aggregates the parameters received from the clients and performs model saving.
+        Args:
+            rnd (int): The current round number.
+            results (List[Tuple[Any, Dict[str, torch.Tensor]]]): The results received from the clients.
+            failures (List[Tuple[int, Exception]]): The list of failures that occurred during the aggregation.
+        Returns:
+            Dict[str, torch.Tensor]: The aggregated parameters.
+        """
         # Debugging: Imprime los resultados recibidos de los clientes
         for client_id, result in results:
             print(f"Client {client_id} sent parameters:")
@@ -94,7 +108,14 @@ class FedAvg(fl.server.strategy.FedAvg):
             raise
 
     def _weighted_average(self, parameters_list: List[Tuple[List[np.ndarray], int]], num_examples: np.ndarray) -> List[np.ndarray]:
-        """Compute weighted average of parameters."""
+        """
+        Computes the weighted average of parameters.
+        Args:
+            parameters_list (List[Tuple[List[np.ndarray], int]]): The list of parameters from the clients.
+            num_examples (np.ndarray): The number of examples from each client.
+        Returns:
+            List[np.ndarray]: The aggregated weights.
+        """
         if not parameters_list:
             raise ValueError("No parameters to aggregate.")
 
@@ -115,13 +136,18 @@ class FedAvg(fl.server.strategy.FedAvg):
         return aggregated_weights
 
 
-
     def _save_model(self, rnd: int, aggregated_weights: List[np.ndarray]):
-        """Save the aggregated model."""
+        """
+            Saves the aggregated model.
+        Args:
+            rnd (int): The current round number.
+            aggregated_weights (List[np.ndarray]): The aggregated weights.
+        """
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in zip(self.parameters.keys(), aggregated_weights)})
         model_path = os.path.join(self.save_model_directory, f"model_round_{rnd}.pth")
         torch.save(state_dict, model_path)
         logging.info(f"Saved model for round {rnd} to {model_path}")
+
 
     def aggregate_evaluate(
         self,
@@ -129,7 +155,15 @@ class FedAvg(fl.server.strategy.FedAvg):
         results: List[Tuple[ClientProxy, EvaluateRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[float], Dict[str, float]]:
-        """Aggregate evaluation metrics from clients."""
+        """
+        Aggregates the evaluation metrics from the clients.
+        Args:
+            server_round (int): The current server round number.
+            results (List[Tuple[ClientProxy, EvaluateRes]]): The evaluation results received from the clients.
+            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): The list of failures that occurred during the aggregation.
+        Returns:
+            Tuple[Optional[float], Dict[str, float]]: The aggregated loss and metrics.
+        """
 
         if not results:
             return None, {}
@@ -155,7 +189,11 @@ class FedAvg(fl.server.strategy.FedAvg):
         # Return aggregated loss and metrics (i.e., aggregated accuracy)
         return aggregated_loss, {"accuracy": aggregated_accuracy}
 
-
     
     def get_history(self):
+        """
+        Returns the history of the FedAvg strategy.
+        Returns:
+            The history of the FedAvg strategy.
+        """
         return self.history

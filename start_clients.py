@@ -1,6 +1,5 @@
 import os
 import subprocess
-import yaml
 from argparse import ArgumentParser
 from utils import load_config
 

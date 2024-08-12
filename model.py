@@ -4,6 +4,19 @@ import torch.nn.functional as F
 
 class SimpleBinaryClassifier(nn.Module):
     def __init__(self, input_size, hidden_dim, num_layers, output_size, dropout_rate):
+        """
+        Initializes the SimpleBinaryClassifier model.
+
+        Args:
+            input_size (int): The size of the input features.
+            hidden_dim (int): The dimension of the hidden layer.
+            num_layers (int): The number of layers in the model.
+            output_size (int): The size of the output.
+            dropout_rate (float): The dropout rate for regularization.
+
+        Returns:
+            None
+        """
         super(SimpleBinaryClassifier, self).__init__()
         self.hidden_dim = hidden_dim        
         self.num_layers = num_layers
@@ -14,6 +27,13 @@ class SimpleBinaryClassifier(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
+        """
+        Performs forward pass of the model.
+        Args:
+            x (torch.Tensor): Input tensor.
+        Returns:
+            torch.Tensor: Output tensor after passing through the model.
+        """
         out = self.fc1(x)
         out = self.relu(out)
         out = self.dropout(out)

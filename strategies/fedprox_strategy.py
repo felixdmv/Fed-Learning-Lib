@@ -35,12 +35,34 @@ def parameters_to_state_dict(aggregated_parameters, model):
 
 class FedProx(fl.server.strategy.FedAvg):
     def __init__(self, prox_mu: float, save_model_directory: str):
+        """
+        Initializes the FedProxStrategy object.
+
+        Args:
+            prox_mu (float): The value of the proximal term coefficient.
+            save_model_directory (str): The directory where the model will be saved.
+
+        Returns:
+            None
+        """
         super().__init__()
         self.prox_mu = prox_mu
         self.save_model_directory = save_model_directory
         self.global_parameters = None  # Assume it will be initialized elsewhere
 
     def aggregate_fit(self, rnd: int, results: List[Tuple[Any, Dict[str, torch.Tensor]]], failures: List[Tuple[int, Exception]]) -> Dict[str, torch.Tensor]:
+        """
+        Aggregates the local parameters, creates a directory for the round, creates a model, checks parameter sizes,
+        exports the model to TorchScript, saves the model, and returns the aggregated parameters.
+        Args:
+            rnd (int): The round number.
+            results (List[Tuple[Any, Dict[str, torch.Tensor]]]): The list of results from the local training.
+            failures (List[Tuple[int, Exception]]): The list of failures that occurred during local training.
+        Returns:
+            Dict[str, torch.Tensor]: The aggregated parameters.
+        Raises:
+            Exception: If there is an error during aggregation or model saving.
+        """
         try:
             # Aggregate local parameters
             aggregated_parameters = super().aggregate_fit(rnd, results, failures)
@@ -68,7 +90,16 @@ class FedProx(fl.server.strategy.FedAvg):
             raise
 
     def configure_fit(self, server_round: int, parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, FitIns]]:
-        """Configure the next round of training with Prox penalty."""
+        """Configure the next round of training with Prox penalty.
+
+        Args:
+            server_round (int): The current round of training on the server.
+            parameters: The parameters for the training.
+            client_manager (ClientManager): The client manager object.
+
+        Returns:
+            List[Tuple[ClientProxy, FitIns]]: A list of tuples containing the client proxy and the fit instructions.
+        """
         config = {
             "prox_mu": self.prox_mu,  # Add the prox_mu parameter for Prox penalty
         }
