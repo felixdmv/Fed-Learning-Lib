@@ -34,9 +34,9 @@ def parameters_to_state_dict(aggregated_parameters, model):
     return state_dict
 
 class FedProx(fl.server.strategy.FedAvg):
-    def __init__(self, mu: float, save_model_directory: str):
+    def __init__(self, prox_mu: float, save_model_directory: str):
         super().__init__()
-        self.mu = mu
+        self.prox_mu = prox_mu
         self.save_model_directory = save_model_directory
         self.global_parameters = None  # Assume it will be initialized elsewhere
 
@@ -70,7 +70,7 @@ class FedProx(fl.server.strategy.FedAvg):
     def configure_fit(self, server_round: int, parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, FitIns]]:
         """Configure the next round of training with Prox penalty."""
         config = {
-            "mu": self.mu,  # Add the mu parameter for Prox penalty
+            "prox_mu": self.prox_mu,  # Add the prox_mu parameter for Prox penalty
         }
         return [(client, FitIns(parameters, config)) for client in client_manager.clients.values()]
 
